@@ -32,4 +32,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: testing
-          files: /**/endeavouros-*.iso
+          files: /EndeavourOS-ISO/**/endeavouros-*.iso
