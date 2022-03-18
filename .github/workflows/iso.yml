@@ -1,0 +1,39 @@
+name: ISO
+'on':
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  iso:
+    name: 'Build ISO'
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      volumes:
+        - /proc:/proc
+      options: --cap-add=sys_admin --security-opt label:disable --privileged
+    steps:
+      - name: Install dependencies
+        run: |
+          curl https://gist.githubusercontent.com/flyingcakes85/cb447a6e48cea1d281387356b7471584/raw/daed6e4e6a37d0e620360be717e4ff5b3230a8e5/enos.txt > /etc/pacman.d/endeavouros-mirrorlist
+          curl https://gist.githubusercontent.com/flyingcakes85/06efa181e0bafd51f0abcbe90dc7be63/raw/80968d6a320a288835fafe95c673193b3cc68b27/pacman-eos >> /etc/pacman.conf
+          pacman-key --init
+          pacman-key --keyserver keyserver.ubuntu.com -r 003DB8B0CB23504F
+          pacman-key --lsign 003DB8B0CB23504F
+          pacman -Syyu archiso mkinitcpio-archiso git squashfs-tools --needed --noconfirm
+      - name: Build
+        run: |
+          git clone https://github.com/endeavouros-team/EndeavourOS-ISO.git
+          cd "EndeavourOS-ISO"
+          ./fix_permissions.sh
+          ./mkarchiso "." 2>&1 | tee "eosiso.log"
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: testing
+          files: /**/endeavouros-*.iso
