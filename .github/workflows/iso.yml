@@ -34,7 +34,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: EndeavourOS ${{ env.DATE }}
-          path: out/*
+          path: EndeavourOS-ISO/out/*
       - name: Release
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -43,4 +43,4 @@ jobs:
           prerelease: true
           title: "EndeavourOS"
           files: |
-            out/*
+            EndeavourOS-ISO/out/*
