@@ -6,14 +6,15 @@ jobs:
   iso:
     name: 'Build ISO'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     container:
       image: archlinux
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      volumes:
-        - /proc:/proc
-      options: --cap-add=sys_admin --security-opt label:disable --privileged
+      options: --privileged
     steps:
+      - name: Set current date as environment variable
+        run: echo "DATE=`date +'%Y.%m.%d'`" >>$GITHUB_ENV
       - name: Install dependencies
         run: |
           curl https://gist.githubusercontent.com/flyingcakes85/cb447a6e48cea1d281387356b7471584/raw/daed6e4e6a37d0e620360be717e4ff5b3230a8e5/enos.txt > /etc/pacman.d/endeavouros-mirrorlist
@@ -28,8 +29,18 @@ jobs:
           cd "EndeavourOS-ISO"
           ./fix_permissions.sh
           ./mkarchiso "." 2>&1 | tee "eosiso.log"
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: Print working dir
+        run: pwd
+      - uses: actions/upload-artifact@v2
         with:
-          tag_name: testing
-          files: /__w/endeavour-iso-build/endeavour-iso-build/EndeavourOS-ISO/out/endeavouros-*.iso
+          name: EndeavourOS ${{ env.DATE }}
+          path: out/*
+      - name: Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ GITHUB_TOKEN }}"
+          automatic_release_tag: ${{ env.DATE }}
+          prerelease: true
+          title: "EndeavourOS"
+          files: |
+            out/*
